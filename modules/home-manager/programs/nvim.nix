@@ -16,25 +16,19 @@
       git
       ripgrep
       lazygit
+      xdg-utils # Required for "System Open" functionality
     ];
 
     plugins = with pkgs.vimPlugins; [
-      # MANDATORY DEPENDENCY
-      plenary-nvim # This fixes the 'plenary.strings' not found error
-
-      # Themes
+      plenary-nvim
       catppuccin-nvim
       tokyonight-nvim
       nightfox-nvim
-
-      # UI
       lualine-nvim
-      nvim-web-devicons
+      nvim-web-devicons # Provides the icons
       bufferline-nvim
       nvim-tree-lua
       telescope-nvim
-
-      # Tools & Coding
       nvim-lspconfig
       nvim-cmp
       cmp-nvim-lsp
@@ -54,7 +48,14 @@
     ];
 
     extraLuaConfig = ''
-      -- 1. THEME PERSISTENCE
+      -- 1. GLOBAL SETTINGS
+      vim.g.mapleader = " "
+      vim.opt.clipboard = "unnamedplus"
+      vim.opt.termguicolors = true
+      vim.opt.number = true
+      vim.opt.mouse = 'a'
+
+      -- 2. THEME PERSISTENCE
       local theme_cache = vim.fn.stdpath("data") .. "/last_theme.txt"
       local function save_theme(theme)
         local f = io.open(theme_cache, "w")
@@ -70,68 +71,86 @@
         return "catppuccin"
       end
 
-      -- 2. SETUP BOOTSTRAP
+      -- 3. NVIM-TREE SETUP (Icons + Media Opening)
+      require('nvim-tree').setup({
+        renderer = {
+          icons = {
+            show = {
+              file = true,
+              folder = true,
+              folder_arrow = true,
+              git = true,
+            },
+          },
+        },
+        view = {
+          width = 35,
+        },
+        -- Open media files with system default app
+        on_attach = function(bufnr)
+          local api = require('nvim-tree.api')
+          local function opts(desc)
+            return { desc = 'nvim-tree: ' .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+          end
+
+          -- Default mappings
+          api.config.mappings.default_on_attach(bufnr)
+
+          -- Custom: Open with System App (Double click or 'o')
+          vim.keymap.set('n', 'o', function()
+            local node = api.tree.get_node_under_cursor()
+            local extension = vim.fn.fnamemodify(node.absolute_path, ":e")
+            local media_exts = { "jpg", "jpeg", "png", "gif", "mp4", "pdf", "mp3", "mkv" }
+            
+            if vim.tbl_contains(media_exts, extension:lower()) then
+              vim.fn.jobstart({ "xdg-open", node.absolute_path }, { detach = true })
+            else
+              api.node.open.edit()
+            end
+          end, opts('Open File or System Media'))
+        end
+      })
+
+      -- Smart Quit: Close Neovim if only NvimTree is left
+      vim.api.nvim_create_autocmd("BufEnter", {
+        group = vim.api.nvim_create_augroup("NvimTreeSmartQuit", { clear = true }),
+        callback = function()
+          local layout = vim.api.nvim_call_function("winlayout", {})
+          if layout[1] == "leaf" and vim.bo[vim.api.nvim_win_get_buf(layout[2])].ft == "NvimTree" and #vim.api.nvim_list_wins() == 1 then
+            vim.cmd("confirm quit")
+          end
+        end
+      })
+
+      -- 4. BOOTSTRAP PLUGINS
       require('nvim-autopairs').setup({ check_ts = true })
       require('gitsigns').setup()
-      require('nvim-tree').setup{}
       require('bufferline').setup{ options = { mode = "buffers" } }
       require('lualine').setup({ options = { theme = 'auto' } })
-      require("toggleterm").setup({
-        open_mapping = [[<C-\>]],
-        direction = 'horizontal',
-        size = 15
-      })
-
-      -- Apply theme
+      require("toggleterm").setup({ open_mapping = [[<C-\>]], direction = 'horizontal', size = 15 })
       pcall(vim.cmd.colorscheme, load_theme())
 
-      -- 3. TOOLS (Lazygit)
-      local Terminal = require('toggleterm.terminal').Terminal
-      local lg_term = Terminal:new({ 
-        cmd = "lazygit", 
-        direction = "float",
-        on_close = function() vim.cmd("checktime") end,
-      })
+      -- 5. TOOLS & KEYBINDINGS
+      local opts = { noremap = true, silent = true, nowait = true }
 
-      -- 4. KEYBINDINGS
+      -- Lazygit
+      local lg_term = require('toggleterm.terminal').Terminal:new({ cmd = "lazygit", direction = "float" })
+      vim.keymap.set('n', '<leader>g', function() lg_term:toggle() end, opts)
 
-      -- SELECT ALL (Native VimScript version - most reliable)
-      -- This saves view, selects all, and restores view in one atomic step
-      vim.keymap.set({'n', 'i', 'v'}, '<C-a>', function()
-        vim.cmd([[
-          let save_view = winsaveview()
-          normal! ggVG
-          call winrestview(save_view)
-        ]])
-      end, { desc = "Select All" })
+      -- Select All
+      vim.keymap.set({'n', 'i', 'v'}, '<C-a>', '<Esc>ggVG', opts)
 
-      -- LAZYGIT (Space + g)
-      vim.keymap.set('n', '<leader>g', function() lg_term:toggle() end)
+      -- Command Palette (Alt + x)
+      vim.keymap.set('n', '<M-x>', function() require('telescope.builtin').keymaps() end, opts)
 
-      -- TELESCOPE (Now works because plenary is installed)
-      vim.keymap.set('n', '<C-p>', function() require('telescope.builtin').find_files() end)
-      vim.keymap.set('n', '<C-S-f>', function() require('telescope.builtin').live_grep() end)
-      vim.keymap.set('n', '<C-S-p>', function() require('telescope.builtin').keymaps() end)
+      -- Search
+      vim.keymap.set('n', '<C-p>', function() require('telescope.builtin').find_files() end, opts)
+      vim.keymap.set('n', '<C-f>', function() require('telescope.builtin').live_grep() end, opts)
 
-      -- THEME PICKER
-      vim.keymap.set('n', '<leader>th', function()
-        require('telescope.builtin').colorscheme({
-          enable_preview = true,
-          attach_mappings = function(prompt_bufnr, _)
-            local actions = require("telescope.actions")
-            local action_state = require("telescope.actions.state")
-            actions.select_default:replace(function()
-              local selection = action_state.get_selected_entry()
-              actions.close(prompt_bufnr)
-              vim.cmd.colorscheme(selection.value)
-              save_theme(selection.value)
-            end)
-            return true
-          end,
-        })
-      end)
+      -- Sidebar Toggle
+      vim.keymap.set('n', '<C-b>', ':NvimTreeToggle<CR>', opts)
 
-      -- 5. LSP & AUTOCOMPLETE
+      -- 6. LSP (Neovim 0.11+)
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
       local servers = { 'pyright', 'nil_ls', 'vtsls', 'lua_ls' }
       for _, lsp in ipairs(servers) do
@@ -143,21 +162,11 @@
         end
       end
 
-      -- 6. GENERAL SETTINGS
-      vim.opt.clipboard = "unnamedplus"
-      vim.opt.number = true
-      vim.opt.relativenumber = true
-      vim.opt.mouse = 'a'
-      vim.opt.termguicolors = true
-      vim.g.mapleader = " "
-
-      -- Navigation
-      vim.keymap.set('n', '<leader>m', ':MinimapToggle<CR>')
-      vim.keymap.set('n', '<C-b>', ':NvimTreeToggle<CR>')
-      vim.keymap.set('n', 'H', ':BufferLineCyclePrev<CR>')
-      vim.keymap.set('n', 'L', ':BufferLineCycleNext<CR>')
-      vim.keymap.set('n', '<C-t>', ':enew<CR>')
-      vim.keymap.set('n', '<C-w>', ':bdelete<CR>')
+      -- Nav Binds
+      vim.keymap.set('n', 'H', ':BufferLineCyclePrev<CR>', opts)
+      vim.keymap.set('n', 'L', ':BufferLineCycleNext<CR>', opts)
+      vim.keymap.set('n', '<C-t>', ':enew<CR>', opts)
+      vim.keymap.set('n', '<C-w>', ':bdelete<CR>', opts)
 
       -- Format on Save
       vim.api.nvim_create_autocmd("BufWritePre", {
