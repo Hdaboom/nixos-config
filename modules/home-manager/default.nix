@@ -8,6 +8,7 @@ in {
     browser     = lib.mkEnableOption "Web browsers";
     development = lib.mkEnableOption "Development tools";
     gaming      = lib.mkEnableOption "Gaming configuration";
+    social	= lib.mkEnableOption "Social Applications";
     allCli      = lib.mkEnableOption "All CLI tools";
     allShell    = lib.mkEnableOption "All shell utilities";
     allPrograms = lib.mkEnableOption "All GUI programs";
@@ -19,6 +20,7 @@ in {
     ./cli/git.nix
     ./programs/firefox.nix
     ./programs/nvim.nix
+    ./programs/vesktop.nix
     ./shell/fish.nix
     ./shell/kitty.nix
   ];
@@ -36,6 +38,10 @@ in {
     # Programs
     (lib.mkIf (!(cfg.browser || cfg.allPrograms || cfg.everything)) {
       programs.firefox.enable = lib.mkForce false;
+    })
+
+    (lib.mkIf (!(cfg.social || cfg.allPrograms || cfg.everything)) {
+    	programs.vesktop.enable = lib.mkForce false;
     })
     
     (lib.mkIf (!(cfg.development || cfg.allPrograms || cfg.everything)) {
