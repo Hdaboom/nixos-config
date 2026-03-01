@@ -7,6 +7,7 @@
 	./networking.nix
 	./kernel.nix
 	./nvidia.nix
+	./ssh.nix
 
 	];
 }
