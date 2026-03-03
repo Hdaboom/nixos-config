@@ -20,6 +20,7 @@ in {
     ./cli/git.nix
     ./programs/firefox.nix
     ./programs/nvim.nix
+    ./programs/vscodium.nix
     ./programs/vesktop.nix
     ./shell/fish.nix
     ./shell/kitty.nix
