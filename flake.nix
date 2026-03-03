@@ -2,13 +2,15 @@
 	description = "My nix flake";
 
 	inputs = {
-		nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+		nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable"; # nix packages
+
 		home-manager = {
-			url = "github:nix-community/home-manager";
+			url = "github:nix-community/home-manager";  #imports home manager
 			inputs.nixpkgs.follows = "nixpkgs";
 		};
+
 		firefox-addons = {
-			url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+			url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons"; # adds declarative support for firefox extensions
 			inputs.nixpkgs.follows = "nixpkgs";
 		};
 	};
