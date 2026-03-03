@@ -19,7 +19,6 @@ in {
   imports = [
     ./cli/git.nix
     ./programs/firefox.nix
-    ./programs/nvim.nix
     ./programs/vscodium.nix
     ./programs/vesktop.nix
     ./shell/fish.nix
@@ -46,7 +45,6 @@ in {
     })
     
     (lib.mkIf (!(cfg.development || cfg.allPrograms || cfg.everything)) {
-      programs.neovim.enable = lib.mkForce false;
       programs.vscode.enable = lib.mkForce false;
     })
 
