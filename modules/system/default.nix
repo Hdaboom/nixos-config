@@ -8,6 +8,7 @@
 	./kernel.nix
 	./nvidia.nix
 	./ssh.nix
+	./fish.nix
 
 	];
 }

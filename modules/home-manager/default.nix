@@ -21,8 +21,7 @@ in {
     ./programs/firefox.nix
     ./programs/vscodium.nix
     ./programs/vesktop.nix
-    ./shell/fish.nix
-    ./shell/kitty.nix
+    ./terminal/kitty.nix
   ];
 
   ## 3. Remote Logic Injection
