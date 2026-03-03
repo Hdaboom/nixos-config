@@ -46,6 +46,7 @@ in {
     
     (lib.mkIf (!(cfg.development || cfg.allPrograms || cfg.everything)) {
       programs.neovim.enable = lib.mkForce false;
+      programs.vscode.enable = lib.mkForce false;
     })
 
     # Shell
