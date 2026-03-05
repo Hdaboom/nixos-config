@@ -22,6 +22,7 @@ in {
     ./programs/vscodium.nix
     ./programs/vesktop.nix
     ./terminal/kitty.nix
+    ./programs/obsidian.nix
   ];
 
   ## 3. Remote Logic Injection
