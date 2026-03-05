@@ -5,12 +5,12 @@
             enable = true;
             remotePlay.openFirewall = true;
             dedicatedServer.openFirewall = true;
-            
+
 
         };
 
-        heroic = {
-            enable;
-        }
-    }
+        /*heroic = {
+            enable = true;
+        };*/
+    };
 } 

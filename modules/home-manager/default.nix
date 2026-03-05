@@ -22,7 +22,6 @@ in {
     ./programs/vscodium.nix
     ./programs/vesktop.nix
     ./terminal/kitty.nix
-    ./programs/gaming.nix
   ];
 
   ## 3. Remote Logic Injection
@@ -53,11 +52,5 @@ in {
       programs.fish.enable = lib.mkForce false;
       programs.kitty.enable = lib.mkForce false;
     })
-
-    # Gaming (Direct Config)
-   (lib.mkIf (cfg.gaming || cfg.everything) {
-    programs.steam.enable = lib.mkForce false;
-    programs.heroic.enable = lib.mkForce false;
-   })
   ];
 }
